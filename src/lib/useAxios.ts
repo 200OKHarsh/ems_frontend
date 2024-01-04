@@ -22,7 +22,7 @@ export const useHttpClient = () => {
       activeHttpRequests.current.push(httpAbortCtrl);
 
       try {
-        const response = await fetch(`https://ems-server-1likx0oi2-200ok-harshs-projects.vercel.app/api${url}`, {
+        const response = await fetch(`https://ems-server-mocha.vercel.app/api${url}`, {
           method,
           body,
           headers,
