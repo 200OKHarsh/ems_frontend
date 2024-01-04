@@ -93,7 +93,7 @@ const EditProfile = () => {
       <div className="grid grid-cols-2 w-1/2 p-4 mx-auto border mt-5">
         <div className="col-span-1 flex">
           <img
-            src={`http://localhost:5000/${user?.image}`}
+            src={`https://ems-server-mocha.vercel.app/${user?.image}`}
             alt={user?.name}
             width={150}
             height={150}
