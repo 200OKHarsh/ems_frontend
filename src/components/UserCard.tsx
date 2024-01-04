@@ -30,7 +30,7 @@ const UserCard = ({
       <Link to={`/user/${user.id}`}>
         <div className="overflow-hidden rounded-md">
           <img
-            src={`https://raw.githubusercontent.com/200OKHarsh/ems_server/main/uploads/images/${user.image}`}
+            src={`https://github.com/200OKHarsh/ems_server/uploads/images/${user.image}`}
             alt={user.name}
             width={width}
             height={height}
