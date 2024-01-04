@@ -27,6 +27,7 @@ import { useHttpClient } from '@/lib/useAxios';
 import { AuthContext } from '@/context/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
+import ErrorDialog from '@/components/ErrorDialog';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -52,7 +53,7 @@ const formSchema = z.object({
 
 const RegisterFrom = () => {
   const navigate = useNavigate()
-  const { sendRequest } = useHttpClient();
+  const { sendRequest , clearError, error } = useHttpClient();
   const [imageUrl, setImageUrl] = useState();
   const { token } = useContext(AuthContext);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -105,6 +106,14 @@ try {
 
   return (
     <>
+            {error && (
+        <ErrorDialog
+          open={!!error}
+          onClose={clearError}
+          title="Error"
+          message={error}
+        />
+      )}
       <ImageUpload onInput={fileHandler} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
