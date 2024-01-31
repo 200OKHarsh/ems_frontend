@@ -150,23 +150,32 @@ const UserDataTable = ({ data }: DataTableProps) => {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    const tempData: UserLeave = {
-      id: Math.random().toString(),
-      start: data.date.from.toISOString(),
-      end: data.date.to.toISOString(),
-      reason: data.reason,
-      status: "Pending",
-    };
+
+    const newLeave = {
+      start: data.date.from,
+      end: data.date.to,
+      reason: data.reason
+    }
     await axiosInstance
-      .post("/leave", data, config)
+      .post("/leave", newLeave, config)
       .then(() => {
         toast({
           title: "Leave Applied !",
           variant: "success",
         });
         setIsModal(false);
+        
+        // Update State Tempory to Show Data without refresh
+        const tempData: UserLeave = {
+          id: Math.random().toString(),
+          start: data.date.from.toISOString(),
+          end: data.date.to.toISOString(),
+          reason: data.reason,
+          status: "Pending",
+        };
 
         const leave = [tempData, ...leaveData];
+        
         setLeaveData(leave);
       })
       .catch((error) => {

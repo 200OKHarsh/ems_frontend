@@ -59,7 +59,7 @@ export function AdminDataTable<TData, TValue> ({ data, columns }: DataTableProps
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter name..."
+          placeholder="Filter By name..."
           value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
             table.getColumn('name')?.setFilterValue(event.target.value)
