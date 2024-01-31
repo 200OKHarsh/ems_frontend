@@ -1,7 +1,7 @@
 import { Menu } from 'lucide-react';
 import { useContext, useState } from 'react';
 import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { Toaster } from './ui/toaster';
 import { AuthContext } from '@/context/auth-context';
 import { useToast } from './ui/use-toast';
@@ -12,10 +12,11 @@ const Layout = () => {
   const [navMenu, setNavMenu] = useState<boolean>(false);
   const { authenticated, setAuthenticated, setToken } = useContext(AuthContext);
   const isAdmin = JSON.parse(localStorage.getItem('user') || '{}');
+  const intials = isAdmin?.user?.name.split(' ').map((name: string) => name[0]).join('').toUpperCase() ?? '';
   const menus = [
     { title: 'Login', path: '/login', visible: !authenticated },
     { title: 'Dashboard', path: '/', visible: authenticated },
-    { title: 'Register', path: '/register', visible: authenticated && isAdmin.role === 'admin' },
+    { title: 'Register', path: '/register', visible: authenticated && isAdmin.user.role === 'admin' },
     { title: 'Leave', path: '/leave', visible: authenticated },
   ];
   const logout = () => {
@@ -69,10 +70,10 @@ const Layout = () => {
                     <Link to={item.path}>{item.title}</Link>
                   </li>
                 ))}
+              <Link to={`/user/${isAdmin.user.userId}`}>
               <Avatar>
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
+                <AvatarFallback>{intials}</AvatarFallback>
+              </Avatar></Link>
             </ul>
           </div>
         </div>

@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from "react";
 
-interface HttpClientResponse {
-  message: string;
+interface HttpClientResponse<T = any>{
+  data?: T;
 }
 
 export const useHttpClient = () => {
@@ -11,43 +11,45 @@ export const useHttpClient = () => {
   const activeHttpRequests = useRef<AbortController[]>([]);
 
   const sendRequest = useCallback(
-    async (
+    async<T>(
       url: string,
-      method: string = 'GET',
+      method: string = "GET",
       body: any = null,
       headers: Record<string, string> = {}
-    ): Promise<HttpClientResponse> => {
+    ): Promise<HttpClientResponse<T>> => {
       setIsLoading(true);
       const httpAbortCtrl = new AbortController();
       activeHttpRequests.current.push(httpAbortCtrl);
 
       try {
-        const response = await fetch(`https://ems-server-mocha.vercel.app/api${url}`, {
+        const response = await fetch(`http://localhost:5000/api${url}`, {
           method,
           body,
           headers,
           signal: httpAbortCtrl.signal,
         });
 
-        const responseData: HttpClientResponse = await response.json();
-
         activeHttpRequests.current = activeHttpRequests.current.filter(
           (reqCtrl) => reqCtrl !== httpAbortCtrl
         );
 
         if (!response.ok) {
-          throw new Error(responseData.message);
+          const resMessage = await response.json();
+          throw new Error(resMessage.message);
         }
+        const responseData: T = await response.json();
 
         setIsLoading(false);
-        return responseData;
-      } catch (err) {
-        console.log(err);
-        if (err.message !== 'The user aborted a request.') {
-          setError(err.message);
+        return { data: responseData };
+      } catch (error: any) {
+        console.log(error);
+        if (error.message !== "The user aborted a request.") {
+          setError(error.message);
           setIsLoading(false);
-          throw err;
+          
+          throw error;
         }
+        return { data: undefined };
       }
     },
     []

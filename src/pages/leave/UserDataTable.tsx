@@ -9,12 +9,12 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown, CalendarIcon, PlusIcon } from 'lucide-react';
+} from "@tanstack/react-table";
+import { CalendarIcon, PlusIcon } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
-import { Input } from '@/components/ui/input';
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,13 +22,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useContext, useState } from 'react';
-import { UserLeave } from '@/types/leave';
-import MainDialog from '@/components/MainDialog';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+} from "@/components/ui/table";
+import { useContext, useState } from "react";
+import { UserLeave } from "@/types/leave";
+import MainDialog from "@/components/MainDialog";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -37,21 +37,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { toast } from '@/components/ui/use-toast';
-import axiosInstance from '@/lib/axios';
-import { AuthContext } from '@/context/auth-context';
-import axios from 'axios';
-import { ValidationError } from '@/types/error';
-import ErrorDialog from '@/components/ErrorDialog';
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { toast } from "@/components/ui/use-toast";
+import axiosInstance from "@/lib/axios";
+import { AuthContext } from "@/context/auth-context";
+import axios from "axios";
+import { ValidationError } from "@/types/error";
+import ErrorDialog from "@/components/ErrorDialog";
+import moment from "moment";
 
 interface DataTableProps {
   data: UserLeave[];
@@ -59,47 +59,54 @@ interface DataTableProps {
 
 export const columns: ColumnDef<UserLeave>[] = [
   {
-    accessorKey: 'startdate',
-    header: 'Start',
+    accessorKey: "start",
+    header: "Start",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue('startdate')}</div>
+      <div className="capitalize">
+        {moment(row.getValue("start")).format("MMM Do YY")}
+      </div>
     ),
   },
   {
-    accessorKey: 'enddate',
-    header: 'End',
+    accessorKey: "end",
+    header: "End",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue('enddate')}</div>
+      <div className="capitalize">
+        {moment(row.getValue("end")).format("MMM Do YY")}
+      </div>
     ),
   },
   {
-    accessorKey: 'status',
-    header: 'Status',
+    accessorKey: "status",
+    header: "Status",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue('status')}</div>
+      <div className="capitalize">{row.getValue("status")}</div>
     ),
   },
 
   {
-    accessorKey: 'reason',
+    accessorKey: "reason",
     header: () => <div className="text-right">Reason</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-right font-medium">{row.getValue('reason')}</div>
+        <div className="text-right font-medium">{row.getValue("reason")}</div>
       );
     },
   },
 ];
 
 const FormSchema = z.object({
-  start: z.date({
-    required_error: 'Start date is required.',
-  }),
-  end: z.date({
-    required_error: 'End date is required.',
-  }),
+  date: z
+    .object({
+      from: z.date(),
+      to: z.date(),
+    })
+    .refine(
+      (data) => data.to > data.from,
+      "Start date must be in the future"
+    ),
   reason: z.string().min(2, {
-    message: 'Please Enter Reason.',
+    message: "Please Enter Reason.",
   }),
 });
 
@@ -107,11 +114,12 @@ const UserDataTable = ({ data }: DataTableProps) => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      reason: '',
+      reason: "",
     },
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [leaveData, setLeaveData] = useState<UserLeave[]>(data);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isModal, setIsModal] = useState<boolean>(false);
@@ -122,7 +130,7 @@ const UserDataTable = ({ data }: DataTableProps) => {
   };
 
   const table = useReactTable({
-    data,
+    data: leaveData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -141,14 +149,24 @@ const UserDataTable = ({ data }: DataTableProps) => {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    const tempData: UserLeave = {
+      id: Math.random().toString(),
+      start: data.date.from.toISOString(),
+      end: data.date.to.toISOString(),
+      reason: data.reason,
+      status: "Pending",
+    };
     await axiosInstance
-      .post('/leave', data, config)
+      .post("/leave", data, config)
       .then(() => {
         toast({
-          title: 'Leave Applied !',
-          variant: 'success',
+          title: "Leave Applied !",
+          variant: "success",
         });
         setIsModal(false);
+
+        const leave = [tempData, ...leaveData];
+        setLeaveData(leave);
       })
       .catch((error) => {
         if (
@@ -161,7 +179,7 @@ const UserDataTable = ({ data }: DataTableProps) => {
       });
   };
 
-  const handleClose =  () => {
+  const handleClose = () => {
     form.reset();
     setIsModal(false);
   };
@@ -171,7 +189,7 @@ const UserDataTable = ({ data }: DataTableProps) => {
       {error && (
         <ErrorDialog
           open={!!error}
-          onClose={() => setError('')}
+          onClose={() => setError("")}
           title="Error"
           message={error}
         />
@@ -191,82 +209,50 @@ const UserDataTable = ({ data }: DataTableProps) => {
               >
                 <FormField
                   control={form.control}
-                  name="start"
+                  name="date"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Start Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
+                    <FormItem>
+                      <FormLabel>Date</FormLabel>
+                      <FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <Button
-                              variant={'outline'}
+                              variant={"outline"}
                               className={cn(
-                                'pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
+                                "w-full justify-start text-left font-normal",
+                                !field.value && "text-muted-foreground"
                               )}
                             >
-                              {field.value ? (
-                                format(field.value, 'PPP')
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {field.value?.from ? (
+                                field.value.to ? (
+                                  <>
+                                    {format(field.value.from, "LLL dd, y")} -{" "}
+                                    {format(field.value.to, "LLL dd, y")}
+                                  </>
+                                ) : (
+                                  format(field.value.from, "LLL dd, y")
+                                )
                               ) : (
                                 <span>Pick a date</span>
                               )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date('1900-01-01')
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="end"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>End Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date('1900-01-01')
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              initialFocus
+                              mode="range"
+                              defaultMonth={field.value?.from}
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              numberOfMonths={2}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                      <FormDescription>
+                        Select the date for when the event will take place
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -321,7 +307,7 @@ const UserDataTable = ({ data }: DataTableProps) => {
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
+                    data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
@@ -348,8 +334,7 @@ const UserDataTable = ({ data }: DataTableProps) => {
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} of{' '}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
+            Total {table.getFilteredRowModel().rows.length} Leaves
           </div>
           <div className="space-x-2">
             <Button

@@ -1,8 +1,8 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -10,95 +10,97 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import moment from 'moment';
-import ImageUpload from '@/components/ImageUpload';
-import { useContext, useState } from 'react';
-import { useHttpClient } from '@/lib/useAxios';
-import { AuthContext } from '@/context/auth-context';
-import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
-import ErrorDialog from '@/components/ErrorDialog';
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import moment from "moment";
+import ImageUpload from "@/components/ImageUpload";
+import { useContext, useState } from "react";
+import { AuthContext } from "@/context/auth-context";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
+import ErrorDialog from "@/components/ErrorDialog";
+import axiosInstance from "@/lib/axios";
+import { encryptAES } from "@/lib/crypto";
+import { format } from "date-fns";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: 'Please Enter Name.',
+    message: "Please Enter Name.",
   }),
-  email: z.string({ required_error: 'Please Enter A Valid Email.' }).email(),
+  email: z.string({ required_error: "Please Enter A Valid Email." }).email(),
   password: z.string().min(4, {
-    message: 'Password length more than 4 needed .',
+    message: "Password length more than 4 needed .",
   }),
   doj: z.date({
-    required_error: 'Enter the joining date',
+    required_error: "Enter the joining date",
   }),
   position: z.string().min(2, {
-    message: 'Please Enter A Valid Position.',
+    message: "Please Enter A Valid Position.",
   }),
   aadhar: z.string().min(2, {
-    message: 'Please Enter A Valid Aadhar Number.',
+    message: "Please Enter A Valid Aadhar Number.",
   }),
   pan: z.string().min(2, {
-    message: 'Please Enter A Valid Pan.',
+    message: "Please Enter A Valid Pan.",
   }),
 });
 
 const RegisterFrom = () => {
-  const navigate = useNavigate()
-  const { sendRequest , clearError, error } = useHttpClient();
+  const navigate = useNavigate();
+  const [error, setError] = useState<string>();
   const [imageUrl, setImageUrl] = useState();
   const { token } = useContext(AuthContext);
+  const config = {
+    headers: { Authorization: `Bearer ${token}` },
+  };
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      aadhar: '',
-      pan: '',
-      password: '',
-      position: '',
-      doj: undefined,
+      name: "",
+      email: "",
+      aadhar: "",
+      pan: "",
+      password: "",
+      position: "",
     },
   });
   const formData = new FormData();
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!imageUrl) {
-      return alert('Please Add Image');
+      return alert("Please Add Image");
     }
-    const dateString = values.doj;
-    const date = moment(dateString, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
-
-    const unixTimestamp = date.unix();
-
-    formData.append('image', imageUrl);
-    formData.append('name', values.name);
-    formData.append('email', values.email);
-    formData.append('aadhar', values.aadhar);
-    formData.append('pan', values.pan);
-    formData.append('password', values.password);
-    formData.append('position', values.position);
-    formData.append('doj', unixTimestamp);
-try {
-  const res = await sendRequest('/users/signup', 'POST', formData, {
-    Authorization: `Bearer ${token}`,
-  });
-  toast({
-    variant: 'success',
-    title: 'Employee Created!',
-  });
-  navigate('/')
-} catch (error) {
-  
-}
-
+ 
+    formData.append("image", imageUrl);
+    formData.append("name", values.name);
+    formData.append("email", values.email);
+    formData.append("aadhar", encryptAES(values.aadhar));
+    formData.append("pan", encryptAES(values.pan));
+    formData.append("password", values.password);
+    formData.append("position", values.position);
+    formData.append("doj", values.doj.toISOString());
+    try {
+      const res = await axiosInstance
+        .post("/users/signup", formData, config)
+        .then(() => {
+          toast({
+            variant: "success",
+            title: "Employee Created!",
+          });
+          navigate("/");
+        })
+        .catch(error => {
+          console.log(error.response);
+          setError(error.response.data.message);
+        });
+    } catch (error) {}
   };
   const fileHandler = (e: any) => {
     setImageUrl(e);
@@ -106,10 +108,10 @@ try {
 
   return (
     <>
-            {error && (
+      {error && (
         <ErrorDialog
           open={!!error}
-          onClose={clearError}
+          onClose={() => setError("")}
           title="Error"
           message={error}
         />
@@ -205,14 +207,14 @@ try {
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant={'outline'}
+                        variant={"outline"}
                         className={cn(
-                          'pl-3 text-left font-normal',
-                          !field.value && 'text-muted-foreground'
+                          "pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
                         )}
                       >
                         {field.value ? (
-                          moment(field.value).format('MMM Do YY')
+                          format(field.value, "PPP")
                         ) : (
                           <span>Pick a date</span>
                         )}
@@ -226,7 +228,7 @@ try {
                       selected={field.value}
                       onSelect={field.onChange}
                       disabled={(date) =>
-                        date > new Date() || date < new Date('1900-01-01')
+                        date > new Date() || date < new Date("1900-01-01")
                       }
                       initialFocus
                     />
@@ -236,7 +238,7 @@ try {
               </FormItem>
             )}
           />
-          <Button size={'lg'} type="submit">
+          <Button size={"lg"} type="submit">
             Submit
           </Button>
         </form>

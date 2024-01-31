@@ -5,12 +5,10 @@ interface FileProps {
 }
 
 const ImageUpload = (props: FileProps) => {
-  const [currentImage, setCurrentImage] = useState<File>();
   const [previewImage, setPreviewImage] = useState<string>('');
 
   const selectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files as FileList;
-    setCurrentImage(selectedFiles?.[0]);
     setPreviewImage(URL.createObjectURL(selectedFiles?.[0]));
     props.onInput(selectedFiles[0]);
   };

@@ -1,10 +1,9 @@
 import { cn } from '@/lib/utils';
 
-import { Album } from './dummy_data/albums';
 import { Link } from 'react-router-dom';
 
 interface UserData {
-  id: number;
+  id: string;
   name: string;
   position: string;
   image: string;
@@ -30,12 +29,12 @@ const UserCard = ({
       <Link to={`/user/${user.id}`}>
         <div className="overflow-hidden rounded-md">
           <img
-            src={`https://raw.githubusercontent.com/200OKHarsh/ems_server/main/${user.image}`}
+            src={`http://localhost:5000/${user.image}`}
             alt={user.name}
             width={width}
             height={height}
             className={cn(
-              'h-auto w-auto object-cover transition-all hover:scale-105',
+              'h-auto w-[150px] object-cover transition-all hover:scale-105',
               aspectRatio === 'portrait' ? 'aspect-[3/4]' : 'aspect-square'
             )}
           />

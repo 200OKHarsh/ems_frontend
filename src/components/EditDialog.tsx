@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,15 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-// import { Label } from '@/components/ui/label';
-import { AuthContext } from '@/context/auth-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import moment from 'moment';
-import { useContext, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { AuthContext } from "@/context/auth-context";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useContext, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -23,112 +21,114 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { cn } from '@/lib/utils';
-import { CalendarIcon, User } from 'lucide-react';
-import { Calendar } from './ui/calendar';
-import { userDetails } from '@/types/user';
-import axiosInstance from '@/lib/axios';
+} from "./ui/form";
+import { userDetails } from "@/types/user";
+import axiosInstance from "@/lib/axios";
+import { decryptionAES, encryptAES } from "@/lib/crypto";
+import { useAppDispatch } from "@/store/hooks";
+import { editUser } from "@/store/features/userSlice";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: 'Please Enter Name.',
+    message: "Please Enter Name.",
   }),
-  email: z.string({ required_error: 'Please Enter A Valid Email.' }).email(),
-  password: z.string().min(4, {
-    message: 'Password length more than 4 needed .',
-  }),
-  doj: z.date({
-    required_error: 'Enter the joining date',
-  }),
+  email: z.string({ required_error: "Please Enter A Valid Email." }).email(),
+  password: z
+  .union([
+    z.string().min(4, {
+      message: "Password must contain at least 4 character",
+    }),
+    z.string().length(0),
+  ])
+  .optional()
+  .transform((e) => (e === "" ? undefined : e)),
   position: z.string().min(2, {
-    message: 'Please Enter A Valid Position.',
+    message: "Please Enter A Valid Position.",
   }),
   aadhar: z.string().min(2, {
-    message: 'Please Enter A Valid Aadhar Number.',
+    message: "Please Enter A Valid Aadhar Number.",
   }),
   pan: z.string().min(2, {
-    message: 'Please Enter A Valid Pan.',
+    message: "Please Enter A Valid Pan.",
   }),
 });
 
 const editSchema = z.object({
   name: z.string().min(2, {
-    message: 'Please Enter Name.',
+    message: "Please Enter Name.",
   }),
-  password: z.string().min(4, {
-    message: 'Please Provide Password',
-  }),
+  password: z
+    .union([
+      z.string().min(4, {
+        message: "Password must contain at least 4 character",
+      }),
+      z.string().length(0),
+    ])
+    .optional()
+    .transform((e) => (e === "" ? undefined : e)),
 });
 interface propType {
   userData: userDetails;
 }
 
 interface editType {
-  id: number;
+  id: string;
   name: string;
   token: string;
 }
 
 interface editUser {
-  userData: propType;
+  data: userDetails;
   token: string;
 }
 
-const AdminEdit = ({ userData, token }: editUser) => {
+const AdminEdit = ({ data, token }: editUser) => {
   const [open, setOpen] = useState(false);
-
-  const date = new Date(userData.doj * 1000);
-  const options = {
-    weekday: 'short',
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short',
-  };
-
-  const formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
+  const dispatch = useAppDispatch();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: userData.name,
-      email: userData.email,
-      aadhar: userData.aadhar,
-      pan: userData.pan,
-      password: '',
-      position: userData.position,
-      doj: new Date(formattedDate),
+      name: data.name,
+      email: data.email,
+      aadhar: decryptionAES(data.aadhar),
+      pan: decryptionAES(data.pan),
+      password: "",
+      position: data.position,
     },
   });
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const dateString = values.doj;
-    const date = moment(dateString, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
-
-    const unixTimestamp = date.unix();
     const config = {
       headers: { Authorization: `Bearer ${token}` },
     };
     await axiosInstance
       .patch(
-        `/users/editprofile/${userData.id}`,
+        `/users/editprofile/${data.id}`,
         {
           name: values.name,
           email: values.email,
           password: values.password,
-          aadhar: values.aadhar,
-          pan: values.pan,
+          aadhar: encryptAES(values.aadhar),
+          pan: encryptAES(values.pan),
           position: values.position,
-          doj: unixTimestamp,
         },
         config
       )
-      .then((res) => {
+      .then(() => {
         setOpen(false);
+        const newData = {
+          id: data.id,
+          name: values.name,
+          email: values.email,
+          aadhar: encryptAES(values.aadhar),
+          pan: encryptAES(values.pan),
+          position: values.position,
+          doj: data.doj,
+          image: data.image,
+          role: 'user'
+        }
+        dispatch(editUser(newData));
+
       })
       .catch((err) => {
         console.log(err);
@@ -147,7 +147,6 @@ const AdminEdit = ({ userData, token }: editUser) => {
             Make changes to Users profile here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        {/* <ImageUpload onInput={fileHandler} /> */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
@@ -228,47 +227,6 @@ const AdminEdit = ({ userData, token }: editUser) => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="doj"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date of Joining</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={'outline'}
-                          className={cn(
-                            'pl-3 text-left font-normal',
-                            !field.value && 'text-muted-foreground'
-                          )}
-                        >
-                          {field.value ? (
-                            moment(field.value).format('LL')
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date('1900-01-01')
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <DialogFooter>
               <Button type="submit">Save changes</Button>
             </DialogFooter>
@@ -280,11 +238,13 @@ const AdminEdit = ({ userData, token }: editUser) => {
 };
 
 const UserEdit = ({ name, id, token }: editType) => {
+  const dispatch = useAppDispatch();
+  
   const form = useForm<z.infer<typeof editSchema>>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       name: name,
-      password: '',
+      password: "",
     },
   });
   const [open, setOpen] = useState(false);
@@ -301,8 +261,9 @@ const UserEdit = ({ name, id, token }: editType) => {
         },
         config
       )
-      .then((res) => {
+      .then(() => {
         setOpen(false);
+        dispatch(editUser({name: values.name, id: id }));
       })
       .catch((err) => {
         console.log(err);
@@ -362,13 +323,13 @@ const EditDialog = ({ userData }: propType) => {
   const { token } = useContext(AuthContext);
 
   const isAdmin =
-    JSON.parse(localStorage.getItem('user') || '{}').role === 'admin';
+    JSON.parse(localStorage.getItem("user") || "{}").user.role === "admin";
   return (
     <>
       {!isAdmin && (
         <UserEdit name={userData.name} id={userData.id} token={token} />
       )}
-      {isAdmin && <AdminEdit userData={userData} token={token} />}
+      {isAdmin && <AdminEdit data={userData} token={token} />}
     </>
   );
 };

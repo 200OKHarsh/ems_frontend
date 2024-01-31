@@ -40,11 +40,11 @@ const AuthProvider = ({ children }: Props) => {
   const navigate = useNavigate();
   useEffect(() => {
     const localData = JSON.parse(localStorage.getItem('user') || '{}');
-    if (Object.keys(localData).length !== 0) {
+      if (localData && localData.user?.token && new Date(localData.exp) > new Date()) {
       setAuthenticated(true);
-      setToken(localData.token);
-      setuserId(localData.userId);
-      setuserRole(localData.role);
+      setToken(localData.user.token);
+      setuserId(localData.user.userId);
+      setuserRole(localData.user.role);
       navigate('/');
     } else {
       setAuthenticated(false);
