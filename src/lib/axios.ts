@@ -2,7 +2,7 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
 
-  baseURL: `${process.env.APP_URL}`
+  baseURL: `${import.meta.env.VITE_APP_URL}/api`
 });
 
 export default axiosInstance;

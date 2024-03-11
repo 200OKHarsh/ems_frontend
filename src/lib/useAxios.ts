@@ -22,7 +22,7 @@ export const useHttpClient = () => {
       activeHttpRequests.current.push(httpAbortCtrl);
 
       try {
-        const response = await fetch(`${process.env.APP_URL}/api${url}`, {
+        const response = await fetch(`${import.meta.env.VITE_APP_URL}/api${url}`, {
           method,
           body,
           headers,
