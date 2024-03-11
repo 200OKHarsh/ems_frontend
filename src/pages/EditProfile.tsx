@@ -17,7 +17,6 @@ import { ValidationError } from "@/types/error";
 import { decryptionAES } from "@/lib/crypto";
 import { editUser, userSelector } from "@/store/features/userSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { format } from "date-fns";
 
 const EditProfile = () => {
   const selectedUsers = useAppSelector(userSelector);
@@ -125,7 +124,7 @@ const EditProfile = () => {
                 <div className="relative">
                   <div>
                     <img
-                      src={`http://localhost:5000/${user?.image}`}
+                      src={`${process.env.APP_URL}/${user?.image}`}
                       alt={user?.name}
                       width={150}
                       height={150}

@@ -22,7 +22,7 @@ export const useHttpClient = () => {
       activeHttpRequests.current.push(httpAbortCtrl);
 
       try {
-        const response = await fetch(`http://localhost:5000/api${url}`, {
+        const response = await fetch(`${process.env.APP_URL}/api${url}`, {
           method,
           body,
           headers,

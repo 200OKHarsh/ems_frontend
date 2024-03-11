@@ -29,7 +29,7 @@ const UserCard = ({
       <Link to={`/user/${user.id}`}>
         <div className="overflow-hidden rounded-md">
           <img
-            src={`http://localhost:5000/${user.image}`}
+            src={`${process.env.APP_URL}/${user.image}`}
             alt={user.name}
             width={width}
             height={height}

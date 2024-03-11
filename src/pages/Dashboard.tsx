@@ -154,7 +154,7 @@ const Dashboard = () => {
                                 <Link to={`/user/${leave.user.id}`}>
                                   <div className="overflow-hidden rounded-md">
                                     <img
-                                      src={`http://localhost:5000/${leave.user.image}`}
+                                      src={`${process.env.APP_URL}/${leave.user.image}`}
                                       alt={leave.user.name}
                                       width={150}
                                       height={150}

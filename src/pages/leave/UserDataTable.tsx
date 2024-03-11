@@ -261,7 +261,7 @@ const UserDataTable = ({ data }: DataTableProps) => {
                         </Popover>
                       </FormControl>
                       <FormDescription>
-                        Select the date for when the event will take place
+                        Select the date for when the leave will take place
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
