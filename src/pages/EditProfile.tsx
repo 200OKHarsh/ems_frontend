@@ -124,7 +124,7 @@ const EditProfile = () => {
                 <div className="relative">
                   <div>
                     <img
-                      src={`${import.meta.env.VITE_APP_URL}/${user?.image}`}
+                      src={`https://raw.githubusercontent.com/200OKHarsh/ems_server/main/${user?.image}`}
                       alt={user?.name}
                       width={150}
                       height={150}

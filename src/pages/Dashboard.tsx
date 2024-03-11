@@ -154,7 +154,7 @@ const Dashboard = () => {
                                 <Link to={`/user/${leave.user.id}`}>
                                   <div className="overflow-hidden rounded-md">
                                     <img
-                                      src={`${import.meta.env.VITE_APP_URL}/${leave.user.image}`}
+                                      src={`https://raw.githubusercontent.com/200OKHarsh/ems_server/main/${leave.user.image}`}
                                       alt={leave.user.name}
                                       width={150}
                                       height={150}

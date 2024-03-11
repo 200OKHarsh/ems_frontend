@@ -29,7 +29,7 @@ const UserCard = ({
       <Link to={`/user/${user.id}`}>
         <div className="overflow-hidden rounded-md">
           <img
-            src={`${import.meta.env.VITE_APP_URL}/${user.image}`}
+            src={`https://raw.githubusercontent.com/200OKHarsh/ems_server/main/${user.image}`}
             alt={user.name}
             width={width}
             height={height}
