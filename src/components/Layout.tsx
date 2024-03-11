@@ -1,14 +1,17 @@
 import { Menu } from 'lucide-react';
 import { useContext, useState } from 'react';
-import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Toaster } from './ui/toaster';
 import { AuthContext } from '@/context/auth-context';
 import { useToast } from './ui/use-toast';
+import clsx from 'clsx';
 
 const Layout = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  console.log(location);
   const [navMenu, setNavMenu] = useState<boolean>(false);
   const { authenticated, setAuthenticated, setToken } = useContext(AuthContext);
   const isAdmin = JSON.parse(localStorage.getItem('user') || '{}');
@@ -66,7 +69,7 @@ const Layout = () => {
               {menus
                 .filter((item) => item.visible)
                 .map((item, idx) => (
-                  <li key={idx} className="text-gray-600 hover:text-primary">
+                  <li key={idx} className={clsx({['text-primary']: location.pathname === item.path },"text-gray-600 hover:text-primary")}>
                     <Link to={item.path}>{item.title}</Link>
                   </li>
                 ))}
